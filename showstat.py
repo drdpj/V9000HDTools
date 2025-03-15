@@ -18,6 +18,7 @@
 #
 
 import click
+import v9kdisklabels
 
 @click.command()
 @click.argument("hdfile", type=click.File("rb"))
@@ -25,6 +26,9 @@ def cli(hdfile):
     """This command shows the disk label for a Victor 9000 Hard Disk image file"""
 
     click.echo("Hello!")
+    disklabel = v9kdisklabels.HDLabel()
+    data = disklabel.get_binary_label()
+    print(data)
 
 if __name__ == "__main__":
         cli()
