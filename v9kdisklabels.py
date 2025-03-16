@@ -130,7 +130,7 @@ class HDLabel:
     disk_address = 0 #dword
     load_address = 0 #word
     load_length = 0 #word
-    cod_entry = 0 #dword
+    code_entry = 0 #dword
     primary_boot_volume = 0 #word
     cylinders = 0 #word big endian
     heads = 0 #byte
@@ -159,7 +159,7 @@ class HDLabel:
     
     def get_binary_label(self):
         data = DISK_LABEL_FORMAT.pack(self.label_type, self.device_id, self.serial_number, self.sector_size, 
-                           self.disk_address, self.load_address, self.load_length, self.cod_entry, self.primary_boot_volume)
+                           self.disk_address, self.load_address, self.load_length, self.code_entry, self.primary_boot_volume)
         data = data + CONTROL_PARAMS_FORMAT.pack(self.cylinders, self.heads, self.reduced_current, self.write_precomp, 
                                   self.data_burst, self.fast_step_control, self.interleave, self.spare_bytes)
         return data
@@ -170,7 +170,7 @@ class HDLabel:
         
         (self.label_type, self.device_id, self.serial_number, self.sector_size, 
          self.disk_address, self.load_address, self.load_length, 
-         self.cod_entry, self.primary_boot_volume) = DISK_LABEL_FORMAT.unpack(first_two_sector_data[pointer:DISK_LABEL_FORMAT.size])
+         self.code_entry, self.primary_boot_volume) = DISK_LABEL_FORMAT.unpack(first_two_sector_data[pointer:DISK_LABEL_FORMAT.size])
         
         pointer=pointer+DISK_LABEL_FORMAT.size
         

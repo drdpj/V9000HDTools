@@ -45,7 +45,7 @@ def cli(hdfile):
     print('\tDisk Address = %s' % hex(disklabel.disk_address))
     print('\tLoad Address = %s' % hex(disklabel.load_address))
     print('\tLoad Length = %s' % hex(disklabel.load_length))
-    print('\tCod Entry = %s' % hex(disklabel.cod_entry))
+    print('\tCode Entry = %s' % hex(disklabel.code_entry))
     print('\nPrimary Boot Volume = %i' % disklabel.primary_boot_volume)
     print('\nControl Parameters (Drive shape):')
     print('\tCylinders = %i' % disklabel.cylinders)
@@ -80,6 +80,7 @@ def cli(hdfile):
             print('\t\tDisk Address = %s' % hex(volume.disk_address))
             print('\t\tLoad Address = %s' % hex(volume.load_address))
             print('\t\tLoad Length = %s' % hex(volume.load_length))
+            print('\t\tCode Entry = %s' % hex(volume.code_entry))
             print('\tVolume Capacity = %s' % hex(volume.volume_capacity), '(%i)' % volume.volume_capacity)
             print('\tData Start = %s' % hex(volume.data_start))
             print('\tHost Block Size = %s' % hex(volume.host_block_size), '(%i)' % volume.host_block_size)
@@ -91,6 +92,28 @@ def cli(hdfile):
                 for configuration_assignment in volume.configuration_assignments_list:
                     print('\tPhysical Device = %i' % configuration_assignment.device_unit,
                           '\tVolume = %i' % configuration_assignment.volume_index)
+                    
+            ## Let's see if we can work out where the FAT sectors are
+            ## This is FAT12, so 12 bits (or 1.5 bytes) per cluster.
+            
+            
+            total_clusters = volume.volume_capacity/volume.allocation_unit
+            print('Clusters: %i' % total_clusters)
+            fat_bytes:int = total_clusters*1.5
+            print('FAT bytes %i' % fat_bytes)
+            fat_sectors:int = divmod(fat_bytes, volume.host_block_size)[0]+1
+            print('FAT size in sectors: %i' % fat_sectors)
+            print('FAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
+            directory_size=volume.number_of_directory_entries*32
+            print('Directory size in bytes: %i' % directory_size)
+            directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+            print('Directory sectors: %i' % directory_sectors)
+            cluster_three_logical = ((directory_sectors+(fat_sectors*2)+1)*volume.host_block_size)
+            cluster_three_physical = cluster_three_logical + (volume.address * volume.host_block_size)
+            # Cluster three should be after the directory sectors + fat sectors, plus the first boot sector
+            print('cluster 3 at logical location %s' % hex(int(cluster_three_logical)))
+            print('cluster 3 at physical location %s' % hex(int(cluster_three_physical)))
+            
     
     hdfile.close() 
     
