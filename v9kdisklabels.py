@@ -84,7 +84,7 @@ class VirtualVolumeLabel:
     text_label: str
     
     def setVolumeLabel(self, bootsector):
-        # print(bootsector)  
+
         pointer = 0
         (self.label_type, self.volume_name, self.disk_address, self.load_address,
          self.load_length, self.code_entry, self.volume_capacity, self.data_start, self.host_block_size,
@@ -101,6 +101,9 @@ class VirtualVolumeLabel:
         configuration_assignment_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             bootsector[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
         pointer = pointer + SINGLE_BYTE_FORMAT.size
+
+        #requires zeroing!    
+        self.configuration_assignments_list=[]
         
         counter = 0
         while counter < configuration_assignment_count:
