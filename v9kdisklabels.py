@@ -68,6 +68,9 @@ class VirtualVolumeLabel:
     address = 0
     
     #These are the virtual label values
+    #Data start is the fist sector after the boot sector that's used
+    #On MS-DOS partitions this will be the first FAT (there are two)
+    
     label_type = 0 # word
     volume_name = bytearray(16)
     disk_address = 0 #dword

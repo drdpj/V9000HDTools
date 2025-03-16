@@ -42,10 +42,10 @@ def cli(hdfile):
     print('Serial Number = %s' %disklabel.serial_number.decode('latin-1'))
     print('Sector Size = %i' %disklabel.sector_size)
     print('\nIPL Vector:')
-    print('\tDisk Address = ', hex(disklabel.disk_address))
-    print('\tLoad Address = ', hex(disklabel.load_address))
-    print('\tLoad Length = ', hex(disklabel.load_length))
-    print('\tCod Entry = ', hex(disklabel.cod_entry))
+    print('\tDisk Address = %s' % hex(disklabel.disk_address))
+    print('\tLoad Address = %s' % hex(disklabel.load_address))
+    print('\tLoad Length = %s' % hex(disklabel.load_length))
+    print('\tCod Entry = %s' % hex(disklabel.cod_entry))
     print('\nPrimary Boot Volume = %i' % disklabel.primary_boot_volume)
     print('\nControl Parameters (Drive shape):')
     print('\tCylinders = %i' % disklabel.cylinders)
@@ -59,11 +59,11 @@ def cli(hdfile):
     
     print('\nAvailable Media: %i' % disklabel.available_media_region_count)
     for media in disklabel.available_media_list:
-        print('\tAddress = ',hex(media.address),'\tBlocks = ',hex(media.blocks), '(', media.blocks, ')')
+        print('\tAddress = %s' % hex(media.address),'\tBlocks = %s' % hex(media.blocks), ' (%i)'% media.blocks)
     
     print('\nWorking Media: %i' % disklabel.working_media_region_count)
     for media in disklabel.working_media_list:
-        print('\tAddress = ',hex(media.address),'\tBlocks = ',hex(media.blocks), '(', media.blocks, ')')
+        print('\tAddress = %s' % hex(media.address),'\tBlocks = %s' % hex(media.blocks), ' (%i)'% media.blocks)
     
     print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
     for volume in disklabel.virtual_volume_list:
@@ -82,9 +82,10 @@ def cli(hdfile):
             print('\t\tLoad Length = %s' % hex(volume.load_length))
             print('\tVolume Capacity = %s' % hex(volume.volume_capacity), '(%i)' % volume.volume_capacity)
             print('\tData Start = %s' % hex(volume.data_start))
-            print('\tHost Block Size = %s' %hex(volume.host_block_size))
+            print('\tHost Block Size = %s' % hex(volume.host_block_size), '(%i)' % volume.host_block_size)
             print('\tAllocation Unit (blocks) = %s' %hex(volume.allocation_unit), '(%i)' % volume.allocation_unit)
             print('\tDirectory Entries = %i' % volume.number_of_directory_entries)
+            print('\tReserved Bytes (16) =',volume.reserved)
                         
             if len(volume.configuration_assignments_list)>0:
                 for configuration_assignment in volume.configuration_assignments_list:
