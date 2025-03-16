@@ -72,7 +72,7 @@ def cli(hdfile):
         #Read the sector and set up the label
         volume.setVolumeLabel(hdfile.read(512))
         print('\tVolume Number: %i ' % volume.volume_number, 
-              'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = ',hex(volume.address))
+              'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
 
     
     hdfile.close() 

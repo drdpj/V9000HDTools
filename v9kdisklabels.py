@@ -41,6 +41,9 @@ SINGLE_BYTE_FORMAT = struct.Struct("B")
 
 CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<H")
 
+#Volume Types
+VOLUME_TYPES=['Undefined,','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
+
 @dataclass
 class AvailableMedia:
     region_number: int = 0
@@ -78,6 +81,7 @@ class VirtualVolumeLabel:
     number_of_directory_entries = 0 # word - entry count
     reserved = bytearray(16)
     configuration_assignments_list: List[Assignments]= []
+    text_label: str
     
     def setVolumeLabel(self, bootsector):
         # print(bootsector)  
@@ -87,6 +91,11 @@ class VirtualVolumeLabel:
          self.allocation_unit, self.number_of_directory_entries, 
          self.reserved) = VIRTUAL_VOLUME_LABEL_FORMAT.unpack(bootsector[pointer:VIRTUAL_VOLUME_LABEL_FORMAT.size])
         pointer = pointer + VIRTUAL_VOLUME_LABEL_FORMAT.size
+        
+        if self.label_type <= 8:
+            self.text_label = VOLUME_TYPES[self.label_type]
+        else:
+            self.text_label = str(self.label_type)
         
     
     
