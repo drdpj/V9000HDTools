@@ -42,7 +42,7 @@ SINGLE_BYTE_FORMAT = struct.Struct("B")
 CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<HH")
 
 #Volume Types
-VOLUME_TYPES=['Undefined,','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
+VOLUME_TYPES=['Undefined','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
 
 @dataclass
 class AvailableMedia:
