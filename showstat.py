@@ -39,7 +39,7 @@ def cli(hdfile):
     print('\nDisk image: %s' % hdfile.name)
     print('Label Type = %i' % disklabel.label_type)
     print('Device ID = %i' % disklabel.device_id)
-    print('Serial Number = %s' %disklabel.serial_number.decode())
+    print('Serial Number = %s' %disklabel.serial_number.decode('latin-1'))
     print('Sector Size = %i' %disklabel.sector_size)
     print('\nIPL Vector:')
     print('\tDisk Address = ', hex(disklabel.disk_address))
@@ -71,7 +71,8 @@ def cli(hdfile):
         hdfile.seek(volume.address*disklabel.sector_size,0)
         #Read the sector and set up the label
         volume.setVolumeLabel(hdfile.read(512))
-        print('\tVolume Number: %i ' % volume.volume_number, 'Name: %s' % volume.volume_name.decode(), 'Address = ',hex(volume.address))
+        print('\tVolume Number: %i ' % volume.volume_number, 
+              'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = ',hex(volume.address))
 
     
     hdfile.close() 
