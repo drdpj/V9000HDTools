@@ -19,6 +19,7 @@
 
 import click
 import v9kdisklabels
+import os
 
 @click.command()
 @click.argument("hdfile", type=click.File("rb"))
@@ -26,9 +27,15 @@ def cli(hdfile):
     """This command shows the disk label for a Victor 9000 Hard Disk image file"""
 
     disklabel = v9kdisklabels.HDLabel()
-    disklabel.set_labels(hdfile.read())
-    data = disklabel.get_binary_label()
-    hdfile.close()
+    disklabel.set_hdd_labels(hdfile.read())
+    hdfile.close()    
+    
+    # Sector size in the right place is probably the best indication of a valid
+    # image...
+    if (disklabel.sector_size != 512):
+        print('\nThis might not be a V9k disk image, but we\'ll have a go anyway...')
+    
+    print('\nDisk image: %s' % hdfile.name)
     print('Label Type = %i' % disklabel.label_type)
     print('Device ID = %i' % disklabel.device_id)
     print('Serial Number = %s' %disklabel.serial_number.decode())
@@ -38,7 +45,16 @@ def cli(hdfile):
     print('\tLoad Address = ', hex(disklabel.load_address))
     print('\tLoad Length = ', hex(disklabel.load_length))
     print('\tCod Entry = ', hex(disklabel.cod_entry))
+    print('\nPrimary Boot Volume = %i' % disklabel.primary_boot_volume)
     print('\nControl Parameters (Drive shape):')
+    print('\tCylinders = %i' % disklabel.cylinders)
+    print('\tHeads = %i' % disklabel.heads)
+    print('\tReduced Current Cylinder = %i' % disklabel.reduced_current)
+    print('\tWrite Precompensation Cylinder = %i' % disklabel.write_precomp)
+    print('\tECC data burst = %i' % disklabel.data_burst)
+    print('\tFast Step Control = %i' % disklabel.fast_step_control)
+    print('\tInterleave = %i' % disklabel.interleave)
+    print('\tSpare bytes (6) = ', disklabel.spare_bytes)
     
     
 if __name__ == "__main__":
