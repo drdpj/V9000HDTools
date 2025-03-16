@@ -19,7 +19,7 @@
 
 import click
 import v9kdisklabels
-import os
+
 
 @click.command()
 @click.argument("hdfile", type=click.File("rb"))
@@ -29,7 +29,7 @@ def cli(hdfile):
     sectordata = hdfile.read(1048)
     disklabel = v9kdisklabels.HDLabel()  
     disklabel.set_hdd_labels(sectordata)
-    hdfile.close()    
+   
     
     # Sector size in the right place is probably the best indication of a valid
     # image...
@@ -67,8 +67,14 @@ def cli(hdfile):
     
     print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
     for volume in disklabel.virtual_volume_list:
-        print('\tAddress = ',hex(volume.address))
+        #Find the boot sector for the virtual volume
+        hdfile.seek(volume.address*disklabel.sector_size,0)
+        #Read the sector and set up the label
+        volume.setVolumeLabel(hdfile.read(512))
+        print('\tVolume Number: %i ' % volume.volume_number, 'Name: %s' % volume.volume_name.decode(), 'Address = ',hex(volume.address))
+
     
+    hdfile.close() 
     
 if __name__ == "__main__":
         cli()

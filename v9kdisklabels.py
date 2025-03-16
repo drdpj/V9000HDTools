@@ -18,6 +18,8 @@
 #
 
 import struct
+from dataclasses import dataclass
+from typing import List
 
 # This is the format for the main element of the disk label
 DISK_LABEL_FORMAT = struct.Struct("<HH 16s HIHHIH")
@@ -33,23 +35,25 @@ VOLUME_ADDRESS_FORMAT = struct.Struct("<I")
 
 #This is the format for the partition boot sectors
 #They're referred to as virtual volumes
-VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<HBIHHIIIHHH 16s")
+VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<H 16s I HH III HHH 16s")
 
 SINGLE_BYTE_FORMAT = struct.Struct("B")
 
 CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<H")
 
-
+@dataclass
 class AvailableMedia:
-    region_number = 0
-    address = 0
-    blocks = 0
-        
+    region_number: int = 0
+    address: int = 0
+    blocks: int = 0
+
+@dataclass        
 class WorkingMedia:
-    region_number = 0
-    address = 0
-    blocks = 0
-    
+    region_number: int = 0
+    address: int = 0
+    blocks: int = 0
+
+@dataclass    
 class Assignments:
     device_unit = 0 # word
     volume_index = 0 # word
@@ -66,13 +70,24 @@ class VirtualVolumeLabel:
     disk_address = 0 #dword
     load_address = 0 #word
     load_length = 0 #word
+    code_entry = 0 #dword
     volume_capacity = 0 #dword - number of physical blocks
     data_start = 0 #dword - virtual address
     host_block_size = 0 #word - MSDOS is 512bytes
     allocation_unit = 0 #word - in physical blocks
     number_of_directory_entries = 0 # word - entry count
     reserved = bytearray(16)
-    configuration_assignments_list = []
+    configuration_assignments_list: List[Assignments]= []
+    
+    def setVolumeLabel(self, bootsector):
+        # print(bootsector)  
+        pointer = 0
+        (self.label_type, self.volume_name, self.disk_address, self.load_address,
+         self.load_length, self.code_entry, self.volume_capacity, self.data_start, self.host_block_size,
+         self.allocation_unit, self.number_of_directory_entries, 
+         self.reserved) = VIRTUAL_VOLUME_LABEL_FORMAT.unpack(bootsector[pointer:VIRTUAL_VOLUME_LABEL_FORMAT.size])
+        pointer = pointer + VIRTUAL_VOLUME_LABEL_FORMAT.size
+        
     
     
 
@@ -100,17 +115,17 @@ class HDLabel:
     available_media_region_count = 0 #byte
     
     #Array of available media
-    available_media_list = []
+    available_media_list: List[AvailableMedia] = []
     
     working_media_region_count = 0 #byte
     
     #List of working media
-    working_media_list = []
+    working_media_list: List[WorkingMedia] = []
 
     virtual_volume_count = 0 #byte
     
     #Array of volume addresses
-    virtual_volume_list = []
+    virtual_volume_list: List[VirtualVolumeLabel] = []
     
     def get_binary_label(self):
         data = DISK_LABEL_FORMAT.pack(self.label_type, self.device_id, self.serial_number, self.sector_size, 
