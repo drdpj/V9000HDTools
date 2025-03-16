@@ -66,8 +66,8 @@ def cli(hdfile):
         print('\tAddress = ',hex(media.address),'\tBlocks = ',hex(media.blocks), '(', media.blocks, ')')
     
     print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
-    for address in disklabel.virtual_volume_list:
-        print('\tAddress = ',hex(address))
+    for volume in disklabel.virtual_volume_list:
+        print('\tAddress = ',hex(volume.address))
     
     
 if __name__ == "__main__":

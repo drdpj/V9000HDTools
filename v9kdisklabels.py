@@ -37,6 +37,8 @@ VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<HBIHHIIIHHH 16s")
 
 SINGLE_BYTE_FORMAT = struct.Struct("B")
 
+CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<H")
+
 
 class AvailableMedia:
     region_number = 0
@@ -48,9 +50,31 @@ class WorkingMedia:
     address = 0
     blocks = 0
     
+class Assignments:
+    device_unit = 0 # word
+    volume_index = 0 # word
+    
 class VirtualVolumeLabel:
     volume_number = 0
+    
+    #This is from the main disk label
     address = 0
+    
+    #These are the virtual label values
+    label_type = 0 # word
+    volume_name = bytearray(16)
+    disk_address = 0 #dword
+    load_address = 0 #word
+    load_length = 0 #word
+    volume_capacity = 0 #dword - number of physical blocks
+    data_start = 0 #dword - virtual address
+    host_block_size = 0 #word - MSDOS is 512bytes
+    allocation_unit = 0 #word - in physical blocks
+    number_of_directory_entries = 0 # word - entry count
+    reserved = bytearray(16)
+    configuration_assignments_list = []
+    
+    
 
 class HDLabel:
     #This is the main hard disk label in sector 0
@@ -152,9 +176,11 @@ class HDLabel:
         
         counter = 0
         while counter < self.virtual_volume_count:
-            physical_address=VOLUME_ADDRESS_FORMAT.unpack(first_two_sector_data[pointer:pointer+VOLUME_ADDRESS_FORMAT.size])[0]
+            virtual_volume = VirtualVolumeLabel()
+            virtual_volume.volume_number = counter
+            virtual_volume.address=VOLUME_ADDRESS_FORMAT.unpack(first_two_sector_data[pointer:pointer+VOLUME_ADDRESS_FORMAT.size])[0]
             pointer = pointer + VOLUME_ADDRESS_FORMAT.size
-            self.virtual_volume_list.append(physical_address)
+            self.virtual_volume_list.append(virtual_volume)
             counter=counter + 1
 
 
