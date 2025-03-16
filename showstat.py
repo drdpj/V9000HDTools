@@ -25,10 +25,21 @@ import v9kdisklabels
 def cli(hdfile):
     """This command shows the disk label for a Victor 9000 Hard Disk image file"""
 
-    click.echo("Hello!")
     disklabel = v9kdisklabels.HDLabel()
+    disklabel.set_labels(hdfile.read())
     data = disklabel.get_binary_label()
-    print(data)
-
+    hdfile.close()
+    print('Label Type = %i' % disklabel.label_type)
+    print('Device ID = %i' % disklabel.device_id)
+    print('Serial Number = %s' %disklabel.serial_number.decode())
+    print('Sector Size = %i' %disklabel.sector_size)
+    print('\nIPL Vector:')
+    print('\tDisk Address = ', hex(disklabel.disk_address))
+    print('\tLoad Address = ', hex(disklabel.load_address))
+    print('\tLoad Length = ', hex(disklabel.load_length))
+    print('\tCod Entry = ', hex(disklabel.cod_entry))
+    print('\nControl Parameters (Drive shape):')
+    
+    
 if __name__ == "__main__":
         cli()
