@@ -19,10 +19,24 @@
 
 import struct
 
+# This is the format for the main element of the disk label
 DISK_LABEL_FORMAT = struct.Struct("<HH 16s HIHHIH")
-CONTROL_PARAMS_FORMAT = struct.Struct(">HBHHBBB 6s B")
-VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<HBIHHIIIHHH 16s B")
-VOLUME_ASSIGNMENT_FORMAT = struct.Struct("<HH")
+
+#This is the format for the control block for the physical drive
+CONTROL_PARAMS_FORMAT = struct.Struct(">HBHHBBB 6s")
+
+#Available media and working media have dwords for address and block count
+MEDIA_LIST_FORMAT = struct.Struct("<II")
+
+#Volumes have a dword address
+VOLUME_ADDRESS_FORMAT = struct.Struct("<I")
+
+#This is the format for the partition boot sectors
+#They're referred to as virtual volumes
+VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<HBIHHIIIHHH 16s")
+
+SINGLE_BYTE_FORMAT = struct.Struct("B")
+
 
 
 class HDLabel:
@@ -47,11 +61,21 @@ class HDLabel:
     
     #These bits vary depending on volumes on the HDD
     available_media_region_count = 0 #byte
-    available_media_list = None
+    
+    #Array of available media
+    available_media_address_list = []
+    available_media_size_list = []
+    
     working_media_region_count = 0 #byte
-    working_media_list = None
+    
+    #Array of working media
+    working_media_address_list = []
+    working_media_size_list = []
+    
     virtual_volume_count = 0 #byte
-    virtual_volume_list = None
+    
+    #Array of volume addresses
+    virtual_volume_list = []
     
     def get_binary_label(self):
         data = DISK_LABEL_FORMAT.pack(self.label_type, self.device_id, self.serial_number, self.sector_size, 
@@ -61,13 +85,64 @@ class HDLabel:
         return data
     
     def set_hdd_labels(self, first_two_sector_data):
+        pointer = 0 
+        end_of_main_label=DISK_LABEL_FORMAT.size+CONTROL_PARAMS_FORMAT.size
+        
         (self.label_type, self.device_id, self.serial_number, self.sector_size, 
          self.disk_address, self.load_address, self.load_length, 
-         self.cod_entry, self.primary_boot_volume) = DISK_LABEL_FORMAT.unpack(first_two_sector_data[:DISK_LABEL_FORMAT.size])
+         self.cod_entry, self.primary_boot_volume) = DISK_LABEL_FORMAT.unpack(first_two_sector_data[pointer:DISK_LABEL_FORMAT.size])
+        
+        pointer=pointer+DISK_LABEL_FORMAT.size
+        
         (self.cylinders, self.heads, self.reduced_current, self.write_precomp, 
          self.data_burst, self.fast_step_control, self.interleave, 
          self.spare_bytes) = CONTROL_PARAMS_FORMAT.unpack(
-             first_two_sector_data[DISK_LABEL_FORMAT.size:DISK_LABEL_FORMAT.size+CONTROL_PARAMS_FORMAT.size])
+             first_two_sector_data[pointer:pointer+CONTROL_PARAMS_FORMAT.size])
+         
+        pointer=pointer+CONTROL_PARAMS_FORMAT.size
+
+        #these are the variable elements
+        
+        #First available media regions
+        
+        self.available_media_region_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
+            first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
+        pointer = pointer + SINGLE_BYTE_FORMAT.size
+               
+        counter = 0
+        while counter < self.available_media_region_count:
+            (physical_address,block_count)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
+            pointer = pointer + MEDIA_LIST_FORMAT.size
+            self.available_media_address_list.append(physical_address)
+            self.available_media_size_list.append(block_count)
+            counter = counter + 1
+        
+        #Working media regions
+        
+        self.working_media_region_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
+            first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
+        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        
+        counter = 0
+        while counter < self.working_media_region_count:
+            (physical_address,block_count)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
+            pointer = pointer + MEDIA_LIST_FORMAT.size
+            self.working_media_address_list.append(physical_address)
+            self.working_media_size_list.append(block_count)
+            counter = counter + 1
+        
+        #Virtual volume addresses
+        
+        self.virtual_volume_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
+            first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
+        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        
+        counter = 0
+        while counter < self.virtual_volume_count:
+            physical_address=VOLUME_ADDRESS_FORMAT.unpack(first_two_sector_data[pointer:pointer+VOLUME_ADDRESS_FORMAT.size])[0]
+            pointer = pointer + VOLUME_ADDRESS_FORMAT.size
+            self.virtual_volume_list.append(physical_address)
+            counter=counter + 1
 
 
     

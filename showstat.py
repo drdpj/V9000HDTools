@@ -26,8 +26,9 @@ import os
 def cli(hdfile):
     """This command shows the disk label for a Victor 9000 Hard Disk image file"""
 
-    disklabel = v9kdisklabels.HDLabel()
-    disklabel.set_hdd_labels(hdfile.read())
+    sectordata = hdfile.read(1048)
+    disklabel = v9kdisklabels.HDLabel()  
+    disklabel.set_hdd_labels(sectordata)
     hdfile.close()    
     
     # Sector size in the right place is probably the best indication of a valid
@@ -55,6 +56,18 @@ def cli(hdfile):
     print('\tFast Step Control = %i' % disklabel.fast_step_control)
     print('\tInterleave = %i' % disklabel.interleave)
     print('\tSpare bytes (6) = ', disklabel.spare_bytes)
+    
+    print('\nAvailable Media: %i' % disklabel.available_media_region_count)
+    for address, blocks in zip(disklabel.available_media_address_list, disklabel.available_media_size_list):
+        print('\tAddress = ',hex(address),'\tBlocks = ',hex(blocks), '(', blocks, ')')
+    
+    print('\nWorking Media: %i' % disklabel.working_media_region_count)
+    for address, blocks in zip(disklabel.working_media_address_list, disklabel.working_media_size_list):
+        print('\tAddress = ',hex(address),'\tBlocks = ',hex(blocks), '(', blocks, ')')
+    
+    print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
+    for address in disklabel.virtual_volume_list:
+        print('\tAddress = ',hex(address))
     
     
 if __name__ == "__main__":
