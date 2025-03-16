@@ -39,7 +39,7 @@ VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<H 16s I HH III HHH 16s")
 
 SINGLE_BYTE_FORMAT = struct.Struct("B")
 
-CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<H")
+CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<HH")
 
 #Volume Types
 VOLUME_TYPES=['Undefined,','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
@@ -97,6 +97,21 @@ class VirtualVolumeLabel:
         else:
             self.text_label = str(self.label_type)
         
+        # Configuration assignments...
+        configuration_assignment_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
+            bootsector[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
+        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        
+        counter = 0
+        while counter < configuration_assignment_count:
+            configuration_assignment = Assignments()
+            (configuration_assignment.device_unit, 
+             configuration_assignment.volume_index) = CONFIGURATION_ASSIGNMENT_FORMAT.unpack(
+                 bootsector[pointer:pointer+CONFIGURATION_ASSIGNMENT_FORMAT.size])
+            pointer = pointer + CONFIGURATION_ASSIGNMENT_FORMAT.size
+            self.configuration_assignments_list.append(configuration_assignment)
+            counter = counter + 1
+            
     
     
 

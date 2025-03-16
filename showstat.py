@@ -71,9 +71,25 @@ def cli(hdfile):
         hdfile.seek(volume.address*disklabel.sector_size,0)
         #Read the sector and set up the label
         volume.setVolumeLabel(hdfile.read(512))
-        print('\tVolume Number: %i ' % volume.volume_number, 
+        print('\n\tVolume Number: %i ' % volume.volume_number, 
               'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
-
+        
+        ##if this is an MS-DOS partition, print some more information
+        if volume.label_type == 1:
+            print('\tIPL Vector:')
+            print('\t\tDisk Address = %s' % hex(volume.disk_address))
+            print('\t\tLoad Address = %s' % hex(volume.load_address))
+            print('\t\tLoad Length = %s' % hex(volume.load_length))
+            print('\tVolume Capacity = %s' % hex(volume.volume_capacity), '(%i)' % volume.volume_capacity)
+            print('\tData Start = %s' % hex(volume.data_start))
+            print('\tHost Block Size = %s' %hex(volume.host_block_size))
+            print('\tAllocation Unit (blocks) = %s' %hex(volume.allocation_unit), '(%i)' % volume.allocation_unit)
+            print('\tDirectory Entries = %i' % volume.number_of_directory_entries)
+            
+            if len(volume.configuration_assignments_list)>0:
+                for configuration_assignment in volume.configuration_assignments_list:
+                    print('\tPhysical Device = %i' % configuration_assignment.device_unit,
+                          '\tVolume = %i' % configuration_assignment.volume_index)
     
     hdfile.close() 
     
