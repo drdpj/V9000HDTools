@@ -85,9 +85,7 @@ def cli(hdfile):
             print('\tHost Block Size = %s' %hex(volume.host_block_size))
             print('\tAllocation Unit (blocks) = %s' %hex(volume.allocation_unit), '(%i)' % volume.allocation_unit)
             print('\tDirectory Entries = %i' % volume.number_of_directory_entries)
-            
-            print(len(volume.configuration_assignments_list))
-            
+                        
             if len(volume.configuration_assignments_list)>0:
                 for configuration_assignment in volume.configuration_assignments_list:
                     print('\tPhysical Device = %i' % configuration_assignment.device_unit,
