@@ -58,12 +58,12 @@ def cli(hdfile):
     print('\tSpare bytes (6) = ', disklabel.spare_bytes)
     
     print('\nAvailable Media: %i' % disklabel.available_media_region_count)
-    for address, blocks in zip(disklabel.available_media_address_list, disklabel.available_media_size_list):
-        print('\tAddress = ',hex(address),'\tBlocks = ',hex(blocks), '(', blocks, ')')
+    for media in disklabel.available_media_list:
+        print('\tAddress = ',hex(media.address),'\tBlocks = ',hex(media.blocks), '(', media.blocks, ')')
     
     print('\nWorking Media: %i' % disklabel.working_media_region_count)
-    for address, blocks in zip(disklabel.working_media_address_list, disklabel.working_media_size_list):
-        print('\tAddress = ',hex(address),'\tBlocks = ',hex(blocks), '(', blocks, ')')
+    for media in disklabel.working_media_list:
+        print('\tAddress = ',hex(media.address),'\tBlocks = ',hex(media.blocks), '(', media.blocks, ')')
     
     print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
     for address in disklabel.virtual_volume_list:

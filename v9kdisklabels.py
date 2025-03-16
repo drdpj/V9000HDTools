@@ -38,6 +38,19 @@ VIRTUAL_VOLUME_LABEL_FORMAT = struct.Struct("<HBIHHIIIHHH 16s")
 SINGLE_BYTE_FORMAT = struct.Struct("B")
 
 
+class AvailableMedia:
+    region_number = 0
+    address = 0
+    blocks = 0
+        
+class WorkingMedia:
+    region_number = 0
+    address = 0
+    blocks = 0
+    
+class VirtualVolumeLabel:
+    volume_number = 0
+    address = 0
 
 class HDLabel:
     #This is the main hard disk label in sector 0
@@ -63,15 +76,13 @@ class HDLabel:
     available_media_region_count = 0 #byte
     
     #Array of available media
-    available_media_address_list = []
-    available_media_size_list = []
+    available_media_list = []
     
     working_media_region_count = 0 #byte
     
-    #Array of working media
-    working_media_address_list = []
-    working_media_size_list = []
-    
+    #List of working media
+    working_media_list = []
+
     virtual_volume_count = 0 #byte
     
     #Array of volume addresses
@@ -111,10 +122,11 @@ class HDLabel:
                
         counter = 0
         while counter < self.available_media_region_count:
-            (physical_address,block_count)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
+            available_media=AvailableMedia()
+            available_media.region_number=counter
+            (available_media.address,available_media.blocks)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
             pointer = pointer + MEDIA_LIST_FORMAT.size
-            self.available_media_address_list.append(physical_address)
-            self.available_media_size_list.append(block_count)
+            self.available_media_list.append(available_media)
             counter = counter + 1
         
         #Working media regions
@@ -125,10 +137,11 @@ class HDLabel:
         
         counter = 0
         while counter < self.working_media_region_count:
-            (physical_address,block_count)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
+            working_media = WorkingMedia()
+            working_media.region_number=counter
+            (working_media.address,working_media.blocks)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
             pointer = pointer + MEDIA_LIST_FORMAT.size
-            self.working_media_address_list.append(physical_address)
-            self.working_media_size_list.append(block_count)
+            self.working_media_list.append(working_media)
             counter = counter + 1
         
         #Virtual volume addresses
@@ -148,4 +161,4 @@ class HDLabel:
     
 
 
-    
+        
