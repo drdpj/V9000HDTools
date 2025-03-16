@@ -1,0 +1,1 @@
+These are some python bits and bobs for manipulating Victor 9000 hard disk images. I will probably make this into a module at some point but for now it's a python version of "showstat" that will be ejecting all the label information for the drive.
