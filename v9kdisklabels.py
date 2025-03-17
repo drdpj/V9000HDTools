@@ -22,7 +22,8 @@ from dataclasses import dataclass
 from typing import List
 
 # This is the format for the main element of the disk label
-DISK_LABEL_FORMAT = struct.Struct("<HH 16s HIHHIH")
+DISK_LABEL_FORMAT = struct.Struct("<HH 16s HIHHIH") 
+
 
 #This is the format for the control block for the physical drive
 CONTROL_PARAMS_FORMAT = struct.Struct(">HBHHBBB 6s")
@@ -46,32 +47,101 @@ VOLUME_TYPES=['Undefined','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 
 
 @dataclass
 class AvailableMedia:
-    region_number: int = 0
-    address: int = 0
-    blocks: int = 0
+    """Class representing data associated with available media.
+    
+    Attributes
+    ----------
+    region_number : int
+        An index number for the media region.
+    address : int
+        Physical address of the region on the disk.
+    blocks : int
+        The size of the region in blocks."""
+        
+    region_number:int = 0
+    address:int = 0
+    blocks:int = 0
 
 @dataclass        
 class WorkingMedia:
+    """Class representing data associated with working media.
+    
+    Attributes
+    ----------
+    region_number : int
+        An index number for the media region.
+    address : int
+        Physical address of the region on the disk.
+    blocks : int
+        The size of the region in blocks."""
+    
     region_number: int = 0
     address: int = 0
     blocks: int = 0
 
 @dataclass    
 class Assignments:
-    device_unit = 0 # word
-    volume_index = 0 # word
+    """Class representing physical and volume assignments to drives letters.
+    """
+    device_unit:int = 0 # word
+    volume_index:int = 0 # word
     
 class VirtualVolumeLabel:
-    volume_number = 0
+    """Class representing the data associated with a virtual volume.
+    
+    Attributes
+    ----------
+    volume_number : int
+        Index number of the volume on the disk
+    label_type : int
+        Numerical representation of label type
+        1=MS-DOS
+        2=CP/M
+        3=UNIX
+    volume_name : bytearray(16)
+        String with the name of the volume
+    disk_address : int
+        Double word with the virtual address of the 
+        Initial Program Load boot program image.
+    load_address : int
+        Double word, the paragraph address of the memory where the 
+        boot program is to load. A zero entry indicates a default 
+        load to the highest RAM location.
+    load_length : int
+        Length of the boot program in paragraphs.
+    code_entry : int
+        Double word representing the entry address of the
+        boot program. Segment of zero defaults to the segment
+        of the loaded program.
+    volume_capacity : int
+        Number of actual blocks comprising the virtual volume.
+    data_start : int
+        Offset (in blocks) to the start of the data space.
+    host_block_size : int
+        Size of a block (sector) in bytes
+    allocation_unit : int
+        Size of allocation units in blocks
+    number_of_directory_entries : int
+        Number of entries allowed in root directory
+    reserved : bytearray(16)
+        16 spare bytes
+    configuration_assignments_list : List[Assignments]
+        A list of drive assignments in order from A: onwards.
+    text_label : str
+        A string representing the type of partition. Not part
+        of the actual disk label
+    """
+    
+    volume_number:int = 0
     
     #This is from the main disk label
-    address = 0
+    address:int = 0
     
     #These are the virtual label values
     #Data start is the fist sector after the boot sector that's used
     #On MS-DOS partitions this will be the first FAT (there are two)
     
-    label_type = 0 # word
+    label_type :int = 0 # word
     volume_name = bytearray(16)
     disk_address = 0 #dword
     load_address = 0 #word
@@ -92,13 +162,18 @@ class VirtualVolumeLabel:
         
     
     def setVolumeLabel(self, bootsector):
+        """_summary_
+
+        Args:
+            bootsector (bytes): a list of bytes for the virtual volume bootsector.
+        """
 
         pointer = 0
         (self.label_type, self.volume_name, self.disk_address, self.load_address,
          self.load_length, self.code_entry, self.volume_capacity, self.data_start, self.host_block_size,
          self.allocation_unit, self.number_of_directory_entries, 
          self.reserved) = VIRTUAL_VOLUME_LABEL_FORMAT.unpack(bootsector[pointer:VIRTUAL_VOLUME_LABEL_FORMAT.size])
-        pointer = pointer + VIRTUAL_VOLUME_LABEL_FORMAT.size
+        pointer += VIRTUAL_VOLUME_LABEL_FORMAT.size
         
         if self.label_type <= 8:
             self.text_label = VOLUME_TYPES[self.label_type]
@@ -108,7 +183,7 @@ class VirtualVolumeLabel:
         # Configuration assignments...
         configuration_assignment_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             bootsector[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
-        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        pointer += SINGLE_BYTE_FORMAT.size
         
         counter = 0
         while counter < configuration_assignment_count:
@@ -118,43 +193,109 @@ class VirtualVolumeLabel:
                  bootsector[pointer:pointer+CONFIGURATION_ASSIGNMENT_FORMAT.size])
             pointer = pointer + CONFIGURATION_ASSIGNMENT_FORMAT.size
             self.configuration_assignments_list.append(configuration_assignment)
-            counter = counter + 1
+            counter += 1
             
+    def getVolumeLabel(self):
+        pass
+    
+    def getFATBootSector(self):
+        pass
     
     
 
 class HDLabel:
+    """Class representing the disk label for a Victor 9000 SASI disk image.
+
+    Attributes
+    ----------
+    label_type : int
+        Version of the label. Usually 1 or 2
+    device_id : int
+        Classification identifying the arrangement, for example, the drive 
+        manufacturer, controller revision number. This allows for the 
+        identification of compatible controllers/drives.
+    serial_number : bytearray(16)
+        The serial number of the unit is stored here.
+    sector_size : int 
+        The physical atomical unit of storage on the media.
+    disk_address : int
+        The logical disk address of the boot program image.
+    load_address : int
+        Double word, the paragraph address of the memory where the 
+        boot program is to load. A zero entry indicates a default 
+        load to the highest RAM location.
+    load_length : int
+        Length of the boot program in paragraphs.
+    code_entry : int
+        Double word representing the entry address of the
+        boot program. Segment of zero defaults to the segment
+        of the loaded program.
+    primary_boot_volume : int
+        The logical address of the virtual volume label containing 
+        the IPL vector and configuration information.
+    cylinders : int
+        Number of cylinders on the disk.
+    heads : int
+        Number of heads.
+    reduced_current : int
+        Sector at which reduced current is used. (128)
+    write_precomp : int
+        Sector at which write precompensation reduced. (128)
+    data_burst : int
+        Data burst byte
+    fast_step_control : int
+        Fast step control byte
+    interleave : int
+        Interleave
+    spare_bytes : bytearray(6)
+        Additional bytes
+    available_media_region_count : int
+        Count of Available regions on the disk - permanent usable areas.
+        These will be related to the "bad tracks" and sectors that
+        come on old drive labels.
+    available_media_list: List[AvailableMedia]
+        List of AvailableMedia objects
+    working_media_region_count : int
+        Count of working media regions - areas that work!
+    working_media_list: List[WorkingMedia]
+        List of WorkingMedia objects
+    virtual_volume_count : int
+        Count of virtual volumes on the disk    
+    virtual_volume_list: List[VirtualVolumeLabel]
+        List of VirtualVolumeLabel objects representing the virtual
+        volumes.
+    """
     #This is the main hard disk label in sector 0
-    label_type = 0 #word
-    device_id = 0 #word
+    label_type : int = 0 #word
+    device_id : int = 0 #word
     serial_number = bytearray(16) #16 byte string
-    sector_size = 0  #word
-    disk_address = 0 #dword
-    load_address = 0 #word
-    load_length = 0 #word
-    code_entry = 0 #dword
-    primary_boot_volume = 0 #word
-    cylinders = 0 #word big endian
-    heads = 0 #byte
-    reduced_current = 0 #word big endian
-    write_precomp = 0 #word big endian
-    data_burst = 0 #byte
-    fast_step_control = 0 #byte
-    interleave = 0 #byte
+    sector_size : int = 0  #word
+    disk_address : int = 0 #dword
+    load_address : int = 0 #word
+    load_length : int = 0 #word
+    code_entry : int = 0 #dword
+    primary_boot_volume : int = 0 #word
+    cylinders : int = 0 #word big endian
+    heads : int = 0 #byte
+    reduced_current : int = 0 #word big endian
+    write_precomp : int = 0 #word big endian
+    data_burst : int = 0 #byte
+    fast_step_control : int = 0 #byte
+    interleave : int = 0 #byte
     spare_bytes = bytearray(6) # 6 bytes
     
     #These bits vary depending on volumes on the HDD
-    available_media_region_count = 0 #byte
+    available_media_region_count : int= 0 #byte
     
     #Array of available media
     available_media_list: List[AvailableMedia] = []
     
-    working_media_region_count = 0 #byte
+    working_media_region_count : int = 0 #byte
     
     #List of working media
     working_media_list: List[WorkingMedia] = []
 
-    virtual_volume_count = 0 #byte
+    virtual_volume_count : int = 0 #byte
     
     #Array of volume addresses
     virtual_volume_list: List[VirtualVolumeLabel] = []
@@ -181,14 +322,14 @@ class HDLabel:
          self.disk_address, self.load_address, self.load_length, 
          self.code_entry, self.primary_boot_volume) = DISK_LABEL_FORMAT.unpack(first_two_sector_data[pointer:DISK_LABEL_FORMAT.size])
         
-        pointer=pointer+DISK_LABEL_FORMAT.size
+        pointer += DISK_LABEL_FORMAT.size
         
         (self.cylinders, self.heads, self.reduced_current, self.write_precomp, 
          self.data_burst, self.fast_step_control, self.interleave, 
          self.spare_bytes) = CONTROL_PARAMS_FORMAT.unpack(
              first_two_sector_data[pointer:pointer+CONTROL_PARAMS_FORMAT.size])
          
-        pointer=pointer+CONTROL_PARAMS_FORMAT.size
+        pointer += CONTROL_PARAMS_FORMAT.size
 
         #these are the variable elements
         
@@ -196,7 +337,7 @@ class HDLabel:
         
         self.available_media_region_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
-        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        pointer += SINGLE_BYTE_FORMAT.size
                
         counter = 0
         while counter < self.available_media_region_count:
@@ -205,28 +346,28 @@ class HDLabel:
             (available_media.address,available_media.blocks)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
             pointer = pointer + MEDIA_LIST_FORMAT.size
             self.available_media_list.append(available_media)
-            counter = counter + 1
+            counter += 1
         
         #Working media regions
         
         self.working_media_region_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
-        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        pointer += SINGLE_BYTE_FORMAT.size
         
         counter = 0
         while counter < self.working_media_region_count:
             working_media = WorkingMedia()
             working_media.region_number=counter
             (working_media.address,working_media.blocks)=MEDIA_LIST_FORMAT.unpack(first_two_sector_data[pointer:pointer+MEDIA_LIST_FORMAT.size])
-            pointer = pointer + MEDIA_LIST_FORMAT.size
+            pointer += MEDIA_LIST_FORMAT.size
             self.working_media_list.append(working_media)
-            counter = counter + 1
+            counter += 1
         
         #Virtual volume addresses
         
         self.virtual_volume_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             first_two_sector_data[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
-        pointer = pointer + SINGLE_BYTE_FORMAT.size
+        pointer += SINGLE_BYTE_FORMAT.size
         
         counter = 0
         while counter < self.virtual_volume_count:
@@ -235,7 +376,7 @@ class HDLabel:
             virtual_volume.address=VOLUME_ADDRESS_FORMAT.unpack(first_two_sector_data[pointer:pointer+VOLUME_ADDRESS_FORMAT.size])[0]
             pointer = pointer + VOLUME_ADDRESS_FORMAT.size
             self.virtual_volume_list.append(virtual_volume)
-            counter=counter + 1
+            counter += 1
 
 
     
