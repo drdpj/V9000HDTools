@@ -86,6 +86,11 @@ class VirtualVolumeLabel:
     configuration_assignments_list: List[Assignments]= []
     text_label: str
     
+    def __init__(self):
+        #Zero lists
+        self.configuration_assignments_list=[]
+        
+    
     def setVolumeLabel(self, bootsector):
 
         pointer = 0
@@ -104,9 +109,6 @@ class VirtualVolumeLabel:
         configuration_assignment_count = int.from_bytes(SINGLE_BYTE_FORMAT.unpack(
             bootsector[pointer:pointer+SINGLE_BYTE_FORMAT.size]))
         pointer = pointer + SINGLE_BYTE_FORMAT.size
-
-        #requires zeroing!    
-        self.configuration_assignments_list=[]
         
         counter = 0
         while counter < configuration_assignment_count:
@@ -156,6 +158,13 @@ class HDLabel:
     
     #Array of volume addresses
     virtual_volume_list: List[VirtualVolumeLabel] = []
+    
+    def __init__(self):
+        #Clear the lists
+        self.available_media_list=[]
+        self.working_media_list=[]
+        self.virtual_volume_list=[]
+        
     
     def get_binary_label(self):
         data = DISK_LABEL_FORMAT.pack(self.label_type, self.device_id, self.serial_number, self.sector_size, 
