@@ -96,23 +96,23 @@ def cli(hdfile):
             ## Let's see if we can work out where the FAT sectors are
             ## This is FAT12, so 12 bits (or 1.5 bytes) per cluster.
             
-            
+            print('\tFAT Calculation for volume:')
             total_clusters = volume.volume_capacity/volume.allocation_unit
-            print('Clusters: %i' % total_clusters)
+            print('\t\tClusters: %i' % total_clusters)
             fat_bytes:int = total_clusters*1.5
-            print('FAT bytes %i' % fat_bytes)
-            fat_sectors:int = divmod(fat_bytes, volume.host_block_size)[0]+1
-            print('FAT size in sectors: %i' % fat_sectors)
-            print('FAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
+            print('\t\tFAT bytes %i' % fat_bytes)
+            fat_sectors = divmod(fat_bytes, volume.host_block_size)[0]+1
+            print('\t\tFAT size in sectors: %i' % fat_sectors)
+            print('\t\tFAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
             directory_size=volume.number_of_directory_entries*32
-            print('Directory size in bytes: %i' % directory_size)
+            print('\t\tDirectory size in bytes: %i' % directory_size)
             directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
-            print('Directory sectors: %i' % directory_sectors)
+            print('\t\tDirectory sectors: %i' % directory_sectors)
             cluster_three_logical = ((directory_sectors+(fat_sectors*2)+1)*volume.host_block_size)
             cluster_three_physical = cluster_three_logical + (volume.address * volume.host_block_size)
             # Cluster three should be after the directory sectors + fat sectors, plus the first boot sector
-            print('cluster 3 at logical location %s' % hex(int(cluster_three_logical)))
-            print('cluster 3 at physical location %s' % hex(int(cluster_three_physical)))
+            print('\t\tCluster 3 (0x2) at logical location %s' % hex(int(cluster_three_logical)))
+            print('\t\tCluster 3 (0x2) at physical location %s' % hex(int(cluster_three_physical)))
             
     
     hdfile.close() 

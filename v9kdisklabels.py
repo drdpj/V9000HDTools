@@ -45,6 +45,9 @@ CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<HH")
 #Volume Types
 VOLUME_TYPES=['Undefined','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
 
+#Standard PC DOS Boot Sector - extended?
+PC_BOOT_SECTOR_FORMAT = struct.Struct("<BBB 8s H B H B H H B H H H I I B B B I 11s 448s B B")
+
 @dataclass
 class AvailableMedia:
     """Class representing data associated with available media.
@@ -85,6 +88,30 @@ class Assignments:
     """
     device_unit:int = 0 # word
     volume_index:int = 0 # word
+    
+class FATbootSector:
+    """Class representing a standard PC Bootsector for a FAT partition
+    """
+    jmp_boot = bytearray(0xeb,0x00, 0x90) #first three bytes
+    oem_name = bytearray("MSDOS3.1") #8 bytes
+    bytes_per_sector: int = 0 #word
+    sectors_per_cluster: int = 0 #byte
+    reserved_sectors:int = 1 #word - always 1 on FAT12
+    num_fats:int = 2 #byte - always 2 for victor images
+    root_dir_entries:int = 0 #word
+    total_sectors_16:int = 0 #word
+    media_field:int = 0xF8 #byte - 0xF8 is standard for HDD
+    fat_size:int = 0 #word - number of FAT sectors
+    sec_per_track:int = 0 #word - sectors/track, not used bar IBM BIOS
+    heads:int = 0 #word 
+    hidden_sectors:int = 0 #dword (sectors before volume)
+    total_sectors_32:int = 0 #dword
+
+    
+    
+    
+    
+    
     
 class VirtualVolumeLabel:
     """Class representing the data associated with a virtual volume.
