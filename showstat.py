@@ -23,14 +23,16 @@ import v9kdisklabels
 
 @click.command()
 @click.argument("hdfile", type=click.File("rb"))
-def cli(hdfile):
+@click.option('--verbose', '-v', is_flag=True, help='Display Volume details')
+@click.option('--extract', "-e", type=(int,str), help="Extract volume INTEGER to file TEXT")
+
+def cli(hdfile, verbose, extract):
     """This command shows the disk label for a Victor 9000 Hard Disk image file"""
 
     sectordata = hdfile.read(1048)
     disklabel = v9kdisklabels.HDLabel()  
     disklabel.set_hdd_labels(sectordata)
-   
-    
+       
     # Sector size in the right place is probably the best indication of a valid
     # image...
     if (disklabel.sector_size != 512):
@@ -64,57 +66,91 @@ def cli(hdfile):
     print('\nWorking Media: %i' % disklabel.working_media_region_count)
     for media in disklabel.working_media_list:
         print('\tAddress = %s' % hex(media.address),'\tBlocks = %s' % hex(media.blocks), ' (%i)'% media.blocks)
-    
-    print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
-    for volume in disklabel.virtual_volume_list:
-        #Find the boot sector for the virtual volume
-        hdfile.seek(volume.address*disklabel.sector_size,0)
-        #Read the sector and set up the label
-        volume.setVolumeLabel(hdfile.read(512))
-        print('\n\tVolume Number: %i ' % volume.volume_number, 
-              'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
-        
-        ##if this is an MS-DOS partition, print some more information
-        if volume.label_type == 1:
-            print('\tIPL Vector:')
-            print('\t\tDisk Address = %s' % hex(volume.disk_address))
-            print('\t\tLoad Address = %s' % hex(volume.load_address))
-            print('\t\tLoad Length = %s' % hex(volume.load_length))
-            print('\t\tCode Entry = %s' % hex(volume.code_entry))
-            print('\tVolume Capacity = %s' % hex(volume.volume_capacity), '(%i)' % volume.volume_capacity)
-            print('\tData Start = %s' % hex(volume.data_start))
-            print('\tHost Block Size = %s' % hex(volume.host_block_size), '(%i)' % volume.host_block_size)
-            print('\tAllocation Unit (blocks) = %s' %hex(volume.allocation_unit), '(%i)' % volume.allocation_unit)
-            print('\tDirectory Entries = %i' % volume.number_of_directory_entries)
-            print('\tReserved Bytes (16) =',volume.reserved)
+    if verbose:
+        print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
+        for volume in disklabel.virtual_volume_list:
+            #Find the boot sector for the virtual volume
+            hdfile.seek(volume.address*disklabel.sector_size,0)
+            #Read the sector and set up the label
+            volume.setVolumeLabel(hdfile.read(512))
+            print('\n\tVolume Number: %i ' % volume.volume_number, 
+                'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
+            
+            ##if this is an MS-DOS partition, print some more information
+            if volume.label_type == 1:
+                print('\tIPL Vector:')
+                print('\t\tDisk Address = %s' % hex(volume.disk_address))
+                print('\t\tLoad Address = %s' % hex(volume.load_address))
+                print('\t\tLoad Length = %s' % hex(volume.load_length))
+                print('\t\tCode Entry = %s' % hex(volume.code_entry))
+                print('\tVolume Capacity = %s' % hex(volume.volume_capacity), '(%i)' % volume.volume_capacity)
+                print('\tData Start = %s' % hex(volume.data_start))
+                print('\tHost Block Size = %s' % hex(volume.host_block_size), '(%i)' % volume.host_block_size)
+                print('\tAllocation Unit (blocks) = %s' %hex(volume.allocation_unit), '(%i)' % volume.allocation_unit)
+                print('\tDirectory Entries = %i' % volume.number_of_directory_entries)
+                print('\tReserved Bytes (16) =',volume.reserved)
+                            
+                if len(volume.configuration_assignments_list)>0:
+                    for configuration_assignment in volume.configuration_assignments_list:
+                        print('\tPhysical Device = %i' % configuration_assignment.device_unit,
+                            '\tVolume = %i' % configuration_assignment.volume_index)
                         
-            if len(volume.configuration_assignments_list)>0:
-                for configuration_assignment in volume.configuration_assignments_list:
-                    print('\tPhysical Device = %i' % configuration_assignment.device_unit,
-                          '\tVolume = %i' % configuration_assignment.volume_index)
-                    
-            ## Let's see if we can work out where the FAT sectors are
-            ## This is FAT12, so 12 bits (or 1.5 bytes) per cluster.
-            
-            print('\tFAT Calculation for volume:')
-            total_clusters = volume.volume_capacity/volume.allocation_unit
-            print('\t\tClusters: %i' % total_clusters)
-            fat_bytes:int = total_clusters*1.5
-            print('\t\tFAT bytes %i' % fat_bytes)
-            fat_sectors = divmod(fat_bytes, volume.host_block_size)[0]+1
-            print('\t\tFAT size in sectors: %i' % fat_sectors)
-            print('\t\tFAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
-            directory_size=volume.number_of_directory_entries*32
-            print('\t\tDirectory size in bytes: %i' % directory_size)
-            directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
-            print('\t\tDirectory sectors: %i' % directory_sectors)
-            cluster_three_logical = ((directory_sectors+(fat_sectors*2)+1)*volume.host_block_size)
-            cluster_three_physical = cluster_three_logical + (volume.address * volume.host_block_size)
-            # Cluster three should be after the directory sectors + fat sectors, plus the first boot sector
-            print('\t\tCluster 3 (0x2) at logical location %s' % hex(int(cluster_three_logical)))
-            print('\t\tCluster 3 (0x2) at physical location %s' % hex(int(cluster_three_physical)))
-            
-    
+                ## Let's see if we can work out where the FAT sectors are
+                ## This is FAT12, so 12 bits (or 1.5 bytes) per cluster.
+                
+                print('\tFAT Calculation for volume:')
+                total_clusters = volume.volume_capacity/volume.allocation_unit
+                print('\t\tClusters: %i' % total_clusters)
+                fat_bytes:int = round(total_clusters*1.5)
+                print('\t\tFAT bytes %i' % fat_bytes)
+                fat_sectors = divmod(fat_bytes, volume.host_block_size)[0]+1
+                print('\t\tFAT size in sectors: %i' % fat_sectors)
+                print('\t\tFAT size in sectors from class: %i' % volume.fat_bootsector.fat_size)
+                print('\t\tFAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
+                directory_size=volume.number_of_directory_entries*32
+                print('\t\tDirectory size in bytes: %i' % directory_size)
+                directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+                print('\t\tDirectory sectors: %i' % directory_sectors)
+                cluster_three_logical = ((directory_sectors+(fat_sectors*2)+1)*volume.host_block_size)
+                cluster_three_physical = cluster_three_logical + (volume.address * volume.host_block_size)
+                # Cluster three should be after the directory sectors + fat sectors, plus the first boot sector
+                print('\t\tCluster 3 (0x2) at logical location %s' % hex(int(cluster_three_logical)))
+                print('\t\tCluster 3 (0x2) at physical location %s' % hex(int(cluster_three_physical)))
+
+    dothething=False
+    if extract:
+        print('Attempting to extract Volume %i image...' % extract[0])
+        if extract[0] < len(disklabel.virtual_volume_list):
+
+            volume = disklabel.virtual_volume_list[extract[0]]
+            if volume.label_type == 1:            
+                #Whilst the v9k automatically deals with rounding to the sector, PC DOS is a bit
+                #more literal...
+                directory_size=volume.number_of_directory_entries*32
+                print('\t\tDirectory size in bytes: %i' % directory_size)
+                directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+                volume.fat_bootsector.root_dir_entries=round((directory_sectors*512)/32)
+                #print(volume.fat_bootsector.getFATBootSectorBytes())
+                data=bytearray(volume.fat_bootsector.getFATBootSectorBytes())
+                padding=bytearray(volume.host_block_size-len(data)-2)
+                data.extend(padding)
+                data.extend([0x55,0xaa])
+                savevolume = open(extract[1],'wb')
+                savevolume.write(data)
+                filepointer=(volume.address*volume.host_block_size)+volume.host_block_size
+                blockcounter=1
+                hdfile.seek(filepointer,0)
+                while blockcounter<volume.volume_capacity:
+                    savevolume.write(hdfile.read(volume.host_block_size))
+                    blockcounter+=1
+                savevolume.close()
+                print('Extracted %s' % extract[1])
+            else:
+                print('Volume %i is not an MS-DOS volume.' % extract[0])
+        else:
+            print('Volume %i does not exist.' % extract[0])        
+                
+        
     hdfile.close() 
     
 if __name__ == "__main__":

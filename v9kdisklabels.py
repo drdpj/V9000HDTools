@@ -46,7 +46,7 @@ CONFIGURATION_ASSIGNMENT_FORMAT = struct.Struct("<HH")
 VOLUME_TYPES=['Undefined','MSDOS','CP/M','UNIX','Custom 4', 'Custom 5', 'Custom 6','Custom 7', 'Custom 8']
 
 #Standard PC DOS Boot Sector - extended?
-PC_BOOT_SECTOR_FORMAT = struct.Struct("<BBB 8s H B H B H H B H H H I I B B B I 11s 448s B B")
+PC_BOOT_SECTOR_FORMAT = struct.Struct("<3s 8s H B H B H H B H H H H")
 
 @dataclass
 class AvailableMedia:
@@ -88,28 +88,6 @@ class Assignments:
     """
     device_unit:int = 0 # word
     volume_index:int = 0 # word
-    
-class FATbootSector:
-    """Class representing a standard PC Bootsector for a FAT partition
-    """
-    jmp_boot = bytearray(0xeb,0x00, 0x90) #first three bytes
-    oem_name = bytearray("MSDOS3.1") #8 bytes
-    bytes_per_sector: int = 0 #word
-    sectors_per_cluster: int = 0 #byte
-    reserved_sectors:int = 1 #word - always 1 on FAT12
-    num_fats:int = 2 #byte - always 2 for victor images
-    root_dir_entries:int = 0 #word
-    total_sectors_16:int = 0 #word
-    media_field:int = 0xF8 #byte - 0xF8 is standard for HDD
-    fat_size:int = 0 #word - number of FAT sectors
-    sec_per_track:int = 0 #word - sectors/track, not used bar IBM BIOS
-    heads:int = 0 #word 
-    hidden_sectors:int = 0 #dword (sectors before volume)
-    total_sectors_32:int = 0 #dword
-
-    
-    
-    
     
     
     
@@ -182,6 +160,7 @@ class VirtualVolumeLabel:
     reserved = bytearray(16)
     configuration_assignments_list: List[Assignments]= []
     text_label: str
+    fat_bootsector = None
     
     def __init__(self):
         #Zero lists
@@ -222,13 +201,77 @@ class VirtualVolumeLabel:
             self.configuration_assignments_list.append(configuration_assignment)
             counter += 1
             
+        if self.label_type ==0x01:
+            self.fat_bootsector = FATbootSector(self)
+            
     def getVolumeLabel(self):
         pass
     
     def getFATBootSector(self):
         pass
     
+class FATbootSector:
+    """Class representing a standard PC Bootsector for a FAT partition. 
+    Fixed values aren't listed here but can be seen in the source.
     
+    Attributes
+    ----------
+    jmp_boot : bytearray(3) 
+        Jump instruction to boot code
+    
+    bytes_per_sector : int
+        Bytes per sector (usually 512)
+    sectors_per_cluster : int
+        Single byte value
+    root_dir_entries : int
+        Number of entries in root directory
+    total_sectors_16 : int
+        Total sectors on volume if < 0x10000
+    fat_size : int = 0
+        Number sectors per FAT
+    sec_per_track:int = 0 #word - sectors/track, not used bar IBM BIOS
+    heads:int = 0 #word 
+    hidden_sectors:int = 0 #dword (sectors before volume)
+    total_sectors_32:int = 0 #dword
+    """
+    jmp_boot = bytearray([0xeb,0x00, 0x90]) #first three bytes
+    oem_name = bytearray("MSDOS3.1","latin1") #8 bytes
+    bytes_per_sector : int = 0 #word
+    sectors_per_cluster : int = 0 #byte
+    reserved_sectors : int = 1 #word - always 1 on FAT12
+    num_fats : int = 2 #byte - always 2 for victor images
+    root_dir_entries : int = 0 #word
+    total_sectors_16 : int = 0 #word
+    media_field : int = 0xF8 #byte - 0xF8 is standard for HDD
+    fat_size : int = 0 #word - number of FAT sectors
+    sec_per_track : int = 0 #word - sectors/track, not used bar IBM BIOS
+    heads : int = 0 #word 
+    hidden_sectors : int = 0 #dword (sectors before volume)
+    total_sectors_32 : int = 0 #dword
+    end_marker = bytearray([])
+
+    def __init__(self, volume: VirtualVolumeLabel):
+        self.bytes_per_sector = volume.host_block_size
+        self.root_dir_entries = volume.number_of_directory_entries
+        self.sectors_per_cluster = volume.allocation_unit
+        self.total_sectors_16 = volume.volume_capacity
+        total_clusters = self.total_sectors_16/self.sectors_per_cluster
+        fat_bytes:int = round(total_clusters*1.5)
+        self.fat_size = divmod(fat_bytes, self.bytes_per_sector)[0]+1
+        #print('PC Format Boot sector size: %i' % PC_BOOT_SECTOR_FORMAT.size)
+        
+    
+    def getFATBootSectorBytes(self):
+        return PC_BOOT_SECTOR_FORMAT.pack(self.jmp_boot, self.oem_name,
+                                          self.bytes_per_sector, self.sectors_per_cluster,
+                                          self.reserved_sectors, self.num_fats,
+                                          self.root_dir_entries, self.total_sectors_16,
+                                          self.media_field, self.fat_size,
+                                          self.sec_per_track, self.heads, self.hidden_sectors)
+        
+    
+    
+   
 
 class HDLabel:
     """Class representing the disk label for a Victor 9000 SASI disk image.
