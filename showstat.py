@@ -24,10 +24,12 @@ import v9kdisklabels
 @click.command()
 @click.argument("hdfile", type=click.File("rb"))
 @click.option('--verbose', '-v', is_flag=True, help='Display Volume details')
-@click.option('--extract', "-e", type=(int,str), help="Extract volume INTEGER to file TEXT")
+@click.option('--extract', '-e', type=(int,str), help='Extract volume INTEGER to file TEXT')
+@click.option('--insert', '-i', type=(str,int,str), help='Insert file TEXT into volume INTEGER with output file TEXT')
 
-def cli(hdfile, verbose, extract):
-    """This command shows the disk label for a Victor 9000 Hard Disk image file"""
+def cli(hdfile, verbose, extract, insert):
+    """This command shows the disk label for a Victor 9000 Hard Disk image file.
+    Ensure the file you're inserting is derived from the one you extracted."""
 
     sectordata = hdfile.read(1048)
     disklabel = v9kdisklabels.HDLabel()  
@@ -66,17 +68,17 @@ def cli(hdfile, verbose, extract):
     print('\nWorking Media: %i' % disklabel.working_media_region_count)
     for media in disklabel.working_media_list:
         print('\tAddress = %s' % hex(media.address),'\tBlocks = %s' % hex(media.blocks), ' (%i)'% media.blocks)
-    if verbose:
-        print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
-        for volume in disklabel.virtual_volume_list:
-            #Find the boot sector for the virtual volume
-            hdfile.seek(volume.address*disklabel.sector_size,0)
-            #Read the sector and set up the label
-            volume.setVolumeLabel(hdfile.read(512))
-            print('\n\tVolume Number: %i ' % volume.volume_number, 
-                'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
-            
-            ##if this is an MS-DOS partition, print some more information
+    
+    print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
+    for volume in disklabel.virtual_volume_list:
+        #Find the boot sector for the virtual volume
+        hdfile.seek(volume.address*disklabel.sector_size,0)
+        #Read the sector and set up the label
+        volume.setVolumeLabel(hdfile.read(512))
+        print('\n\tVolume Number: %i ' % volume.volume_number, 
+            'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
+        if verbose:
+        ##if this is an MS-DOS partition, print some more information
             if volume.label_type == 1:
                 print('\tIPL Vector:')
                 print('\t\tDisk Address = %s' % hex(volume.disk_address))
@@ -117,7 +119,6 @@ def cli(hdfile, verbose, extract):
                 print('\t\tCluster 3 (0x2) at logical location %s' % hex(int(cluster_three_logical)))
                 print('\t\tCluster 3 (0x2) at physical location %s' % hex(int(cluster_three_physical)))
 
-    dothething=False
     if extract:
         print('Attempting to extract Volume %i image...' % extract[0])
         if extract[0] < len(disklabel.virtual_volume_list):
@@ -149,7 +150,32 @@ def cli(hdfile, verbose, extract):
                 print('Volume %i is not an MS-DOS volume.' % extract[0])
         else:
             print('Volume %i does not exist.' % extract[0])        
-                
+    elif insert:
+        print('Attempting to insert %s as volume %i in new file %s.' % (insert[0], insert[1], insert[2]))     
+        infile = open(insert[0],'rb')
+        outfile = open(insert[2], 'wb')
+        volume = disklabel.virtual_volume_list[insert[1]]
+        blockcounter=0
+        hdfile.seek(0)
+        outdata=hdfile.read(volume.host_block_size)
+        insertdata = infile.read(volume.host_block_size)
+        while outdata:
+            if blockcounter<(volume.address+1) or blockcounter>(volume.address+volume.volume_capacity):
+                outfile.write(outdata)
+            else:
+                insertdata = infile.read(volume.host_block_size)
+                if insertdata:
+                    outfile.write(insertdata)
+                else:
+                    outfile.write(outdata)
+            outdata=hdfile.read(volume.host_block_size)
+            blockcounter+=1
+
+        infile.close()
+        outfile.close()
+            
+            
+        
         
     hdfile.close() 
     
