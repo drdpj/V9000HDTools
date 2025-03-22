@@ -59,7 +59,8 @@ Working Media: 1
 Virtual Volumes: 3
         Volume Number: 0  Name:  VOL1            Address = 0x2 Type : MSDOS
         Volume Number: 1  Name: VOLUME 1         Address = 0xea62 Type : MSDOS
-        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535'''
+        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535
+```
 
 You can see the basic information for the drive. And teh volumes on it - this particular image has three volumes, 0 and 1 are usable MSDOS volumes, at this stage I'm not sure what the maintenance volume is there for!
 
@@ -114,7 +115,8 @@ Addresses of volumes are the number of sectors from the start of the disk where 
                 Directory sectors: 29
                 Cluster 3 (0x2) at logical location 0x4800
                 Cluster 3 (0x2) at physical location 0x1d50c00
-        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535```
+        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535
+```
 
 This shows the contents of what would be the FAT boot sector on a PC, but is the volume record on the Victor. These include pointers to the "initial program load" vector, and the bootable volume holds information about drive allocations (these are in order, A: onwards, the physical attribute refers to the left and right floppy drives). Also displayed is a FAT calculation for the volume, if it's an MS-DOS volume. This is the information that will form the boot sector if you extract the volume, and also provides the necessary addresses for a sense check if you're looking at things in a hex editor.
 
@@ -123,7 +125,8 @@ To extract a volume (let's say volume 1 in this case):
 You'll see the disk information displayed and then:
 ```Attempting to extract Volume 1 image...
                 Directory size in bytes: 14592
-Extracted vol1.img```
+Extracted vol1.img
+```
 
 You can then add/retrieve files from the extracted image using whatever tools you have available.
 
