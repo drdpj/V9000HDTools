@@ -75,7 +75,7 @@ def cli(hdfile, verbose, extract, insert):
         hdfile.seek(volume.address*disklabel.sector_size,0)
         #Read the sector and set up the label
         volume.setVolumeLabel(hdfile.read(512))
-        print('\n\tVolume Number: %i ' % volume.volume_number, 
+        print('\tVolume Number: %i ' % volume.volume_number, 
             'Name: %s' % volume.volume_name.decode('latin-1'), 'Address = %s' % hex(volume.address), 'Type : %s' % volume.text_label)
         if verbose:
         ##if this is an MS-DOS partition, print some more information
