@@ -9,7 +9,8 @@ Here are some examples using a 60mb image that contains two volumes.
 
 Firstly, ``showstat --help``:
 
-```Usage: showstat.py [OPTIONS] HDFILE
+```
+Usage: showstat.py [OPTIONS] HDFILE
 
   This command shows the disk label for a Victor 9000 Hard Disk image file.
   Ensure the file you're inserting is derived from the one you extracted.
@@ -66,7 +67,8 @@ You can see the basic information for the drive. And teh volumes on it - this pa
 
 Addresses of volumes are the number of sectors from the start of the disk where they start. We can see further information about the volumes using the -v or --verbose option:
 
-```Virtual Volumes: 3
+```
+Virtual Volumes: 3
         Volume Number: 0  Name:  VOL1            Address = 0x2 Type : MSDOS
         IPL Vector:
                 Disk Address = 0x25
@@ -121,10 +123,12 @@ Addresses of volumes are the number of sectors from the start of the disk where 
 This shows the contents of what would be the FAT boot sector on a PC, but is the volume record on the Victor. These include pointers to the "initial program load" vector, and the bootable volume holds information about drive allocations (these are in order, A: onwards, the physical attribute refers to the left and right floppy drives). Also displayed is a FAT calculation for the volume, if it's an MS-DOS volume. This is the information that will form the boot sector if you extract the volume, and also provides the necessary addresses for a sense check if you're looking at things in a hex editor.
 
 To extract a volume (let's say volume 1 in this case):
-```showstat.py -e 1 vol1.img 60meg.dsk
+```
+showstat.py -e 1 vol1.img 60meg.dsk
 ```
 You'll see the disk information displayed and then:
-```Attempting to extract Volume 1 image...
+```
+Attempting to extract Volume 1 image...
                 Directory size in bytes: 14592
 Extracted vol1.img
 ```
@@ -132,10 +136,12 @@ Extracted vol1.img
 You can then add/retrieve files from the extracted image using whatever tools you have available.
 
 To re-integrate the volume:
-```showstat.py -i vol1.img 1 new60meg.dsk 60meg.dsk
+```
+showstat.py -i vol1.img 1 new60meg.dsk 60meg.dsk
 ```
 And you should get the messge:
-```Attempting to insert vol1.img as volume 1 in new file new60meg.dsk.
+```
+Attempting to insert vol1.img as volume 1 in new file new60meg.dsk.
 ```
 
 Your original image will remain as it was, a new file is created (new60meg.dsk) with your edited volume inserted back in the right place.
