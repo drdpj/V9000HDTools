@@ -5,7 +5,7 @@ At its most simple, running showstat against a victor hard disk image (for examp
 
 Firstly, ``showstat --help``:
 
-``Usage: showstat.py [OPTIONS] HDFILE
+```Usage: showstat.py [OPTIONS] HDFILE
 
   This command shows the disk label for a Victor 9000 Hard Disk image file.
   Ensure the file you're inserting is derived from the one you extracted.
@@ -17,4 +17,4 @@ Options:
   -i, --insert <TEXT INTEGER TEXT>...
                                   Insert file TEXT into volume INTEGER with
                                   output file TEXT
-  --help                          Show this message and exit.``
+  --help                          Show this message and exit.```
