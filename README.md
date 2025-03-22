@@ -59,7 +59,7 @@ Working Media: 1
 Virtual Volumes: 3
         Volume Number: 0  Name:  VOL1            Address = 0x2 Type : MSDOS
         Volume Number: 1  Name: VOLUME 1         Address = 0xea62 Type : MSDOS
-        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535```
+        Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535'''
 
 You can see the basic information for the drive. And teh volumes on it - this particular image has three volumes, 0 and 1 are usable MSDOS volumes, at this stage I'm not sure what the maintenance volume is there for!
 
