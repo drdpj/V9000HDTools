@@ -64,7 +64,7 @@ Virtual Volumes: 3
         Volume Number: 2  Name: maintenance      Address = 0x1cea6 Type : 65535
 ```
 
-You can see the basic information for the drive. And teh volumes on it - this particular image has three volumes, 0 and 1 are usable MSDOS volumes, at this stage I'm not sure what the maintenance volume is there for!
+You can see the basic information for the drive. And the volumes on it - this particular image has three volumes, 0 and 1 are usable MSDOS volumes, at this stage I'm not sure what the maintenance volume is there for!
 
 Addresses of volumes are the number of sectors from the start of the disk where they start. We can see further information about the volumes using the -v or --verbose option:
 
