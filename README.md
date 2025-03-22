@@ -22,10 +22,11 @@ Options:
   -i, --insert <TEXT INTEGER TEXT>...
                                   Insert file TEXT into volume INTEGER with
                                   output file TEXT
-  --help                          Show this message and exit.```
-
-  Viewing basic information:
-  ```python showstat.py 60meg.dsk
+  --help                          Show this message and exit.
+```
+Viewing basic information:
+  ```
+python showstat.py 60meg.dsk
 
 Disk image: 60meg.dsk
 Label Type = 2
