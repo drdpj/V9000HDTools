@@ -19,6 +19,7 @@
 
 import click
 import v9kdisklabels
+import os
 
 
 @click.command()
@@ -124,28 +125,10 @@ def cli(hdfile, verbose, extract, insert):
         if extract[0] < len(disklabel.virtual_volume_list):
 
             volume = disklabel.virtual_volume_list[extract[0]]
-            if volume.label_type == 1:            
-                #Whilst the v9k automatically deals with rounding to the sector, PC DOS is a bit
-                #more literal...
-                directory_size=volume.number_of_directory_entries*32
-                print('\t\tDirectory size in bytes: %i' % directory_size)
-                directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
-                volume.fat_bootsector.root_dir_entries=round((directory_sectors*512)/32)
-                #print(volume.fat_bootsector.getFATBootSectorBytes())
-                data=bytearray(volume.fat_bootsector.getFATBootSectorBytes())
-                padding=bytearray(volume.host_block_size-len(data)-2)
-                data.extend(padding)
-                data.extend([0x55,0xaa])
-                savevolume = open(extract[1],'wb')
-                savevolume.write(data)
-                filepointer=(volume.address*volume.host_block_size)+volume.host_block_size
-                blockcounter=1
-                hdfile.seek(filepointer,0)
-                while blockcounter<volume.volume_capacity:
-                    savevolume.write(hdfile.read(volume.host_block_size))
-                    blockcounter+=1
+            if volume.label_type == 1:
+                savevolume = open(extract[1],'wb')            
+                extract_volume(hdfile, savevolume, volume)
                 savevolume.close()
-                print('Extracted %s' % extract[1])
             else:
                 print('Volume %i is not an MS-DOS volume.' % extract[0])
         else:
@@ -155,29 +138,55 @@ def cli(hdfile, verbose, extract, insert):
         infile = open(insert[0],'rb')
         outfile = open(insert[2], 'wb')
         volume = disklabel.virtual_volume_list[insert[1]]
-        blockcounter=0
-        hdfile.seek(0)
-        outdata=hdfile.read(volume.host_block_size)
-        insertdata = infile.read(volume.host_block_size)
-        while outdata:
-            if blockcounter<(volume.address+1) or blockcounter>(volume.address+volume.volume_capacity):
-                outfile.write(outdata)
-            else:
-                insertdata = infile.read(volume.host_block_size)
-                if insertdata:
-                    outfile.write(insertdata)
-                else:
-                    outfile.write(outdata)
-            outdata=hdfile.read(volume.host_block_size)
-            blockcounter+=1
-
+        if os.stat(infile.name).st_size == volume.volume_capacity*volume.host_block_size:
+            insert_volume(hdfile, infile, outfile, volume)
+            print('Success!')
+        else:
+            print('Volume size mismatch.')
         infile.close()
         outfile.close()
-            
-            
-        
-        
     hdfile.close() 
+
+def extract_volume(hdfile, savevolume, volume):
+    #Whilst the v9k automatically deals with rounding to the sector, PC DOS is a bit
+    #more literal...
+    directory_size=volume.number_of_directory_entries*32
+    print('\t\tDirectory size in bytes: %i' % directory_size)
+    directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+    volume.fat_bootsector.root_dir_entries=round((directory_sectors*512)/32)
+    #print(volume.fat_bootsector.getFATBootSectorBytes())
+    data=bytearray(volume.fat_bootsector.getFATBootSectorBytes())
+    padding=bytearray(volume.host_block_size-len(data)-2)
+    data.extend(padding)
+    data.extend([0x55,0xaa])
+    savevolume.write(data)
+    filepointer=(volume.address*volume.host_block_size)+volume.host_block_size
+    blockcounter=1
+    hdfile.seek(filepointer,0)
+    while blockcounter<volume.volume_capacity:
+        savevolume.write(hdfile.read(volume.host_block_size))
+        blockcounter+=1
+    print('Extracted %s' % savevolume.name)
+    return
+
+def insert_volume(hdfile, infile, outfile, volume):
+    blockcounter=0
+    hdfile.seek(0)
+    outdata=hdfile.read(volume.host_block_size)
+    insertdata = infile.read(volume.host_block_size)
+    while outdata:
+        if blockcounter<(volume.address+1) or blockcounter>(volume.address+volume.volume_capacity):
+            outfile.write(outdata)
+        else:
+            insertdata = infile.read(volume.host_block_size)
+            if insertdata:
+                outfile.write(insertdata)
+            else:
+                outfile.write(outdata)
+        outdata=hdfile.read(volume.host_block_size)
+        blockcounter+=1
+    return
+
     
 if __name__ == "__main__":
         cli()
