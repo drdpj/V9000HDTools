@@ -33,7 +33,7 @@ def cli(hdfile, verbose, extract, insert):
     """This command shows the disk label for a Victor 9000 Hard Disk image file.
     Ensure the file you're inserting is derived from the one you extracted."""
 
-    sectordata = hdfile.read(1048)
+    sectordata = hdfile.read(512)
     disklabel = v9kdisklabels.HDLabel()  
     disklabel.set_hdd_labels(sectordata)
        

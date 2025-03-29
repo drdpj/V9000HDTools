@@ -392,6 +392,11 @@ class HDLabel:
         
         for mediaitem in self.working_media_list:
             data = data + MEDIA_LIST_FORMAT.pack(mediaitem.address, mediaitem.blocks)
+            
+        data = data + SINGLE_BYTE_FORMAT.pack(self.virtual_volume_count)
+        
+        for volumeitem in self.virtual_volume_list:
+            data = data + VOLUME_ADDRESS_FORMAT.pack(volumeitem.address)
         
         return data
     
