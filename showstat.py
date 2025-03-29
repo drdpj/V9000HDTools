@@ -214,7 +214,6 @@ def cli(hdfile, verbose, extract, insert, dumpall):
             if volume.label_type == 1:
                 savevolume = open(hdfile.name+'.'+'{:0>3}'.format(volume.volume_number),'wb')
                 extract_volume(hdfile, savevolume, volume)
-                print('Extracting %s' % savevolume.name)
                 savevolume.close()
         
     hdfile.close() 
@@ -223,7 +222,7 @@ def extract_volume(hdfile, savevolume, volume):
     #Whilst the v9k automatically deals with rounding to the sector, PC DOS is a bit
     #more literal...
     directory_size=volume.number_of_directory_entries*32
-    print('\t\tDirectory size in bytes: %i' % directory_size)
+    ##print('\t\tDirectory size in bytes: %i' % directory_size)
     directory_sectors = divmod(directory_size, volume.host_block_size)[0]
     if divmod(directory_size, volume.host_block_size)[1] > 0:
         directory_sectors +=1
