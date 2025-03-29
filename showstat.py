@@ -173,7 +173,9 @@ def cli(hdfile, verbose, extract, insert, dumpall):
                 print('\t\tFAT at logical sectors: %i %i' % (volume.data_start, volume.data_start+fat_sectors) )
                 directory_size=volume.number_of_directory_entries*32
                 print('\t\tDirectory size in bytes: %i' % directory_size)
-                directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+                directory_sectors = divmod(directory_size, volume.host_block_size)[0]
+                if divmod(directory_size,directory_sectors)[1] > 0:
+                    directory_sectors +=1
                 print('\t\tDirectory sectors: %i' % directory_sectors)
                 cluster_three_logical = ((directory_sectors+(fat_sectors*2)+1)*volume.host_block_size)
                 cluster_three_physical = cluster_three_logical + (volume.address * volume.host_block_size)
@@ -222,7 +224,11 @@ def extract_volume(hdfile, savevolume, volume):
     #more literal...
     directory_size=volume.number_of_directory_entries*32
     print('\t\tDirectory size in bytes: %i' % directory_size)
-    directory_sectors = divmod(directory_size, volume.host_block_size)[0]+1
+    directory_sectors = divmod(directory_size, volume.host_block_size)[0]
+    if divmod(directory_size, volume.host_block_size)[1] > 0:
+        directory_sectors +=1
+    # If this is DOS3.1 we seem to need an extra sector for the directory...
+    
     volume.fat_bootsector.root_dir_entries=round((directory_sectors*512)/32)
     #print(volume.fat_bootsector.getFATBootSectorBytes())
     data=bytearray(volume.fat_bootsector.getFATBootSectorBytes())
