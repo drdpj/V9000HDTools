@@ -28,8 +28,9 @@ import copy
 @click.option('--verbose', '-v', is_flag=True, help='Display Volume details')
 @click.option('--extract', '-e', type=(int,str), help='Extract volume INTEGER to file TEXT')
 @click.option('--insert', '-i', type=(str,int,str), help='Insert file TEXT into volume INTEGER with output file TEXT')
+@click.option('--dumpall', '-d', is_flag=True, help='Dump all the volumes with .XXX suffix where XXX is the Volume No.')
 
-def cli(hdfile, verbose, extract, insert):
+def cli(hdfile, verbose, extract, insert, dumpall):
     """This command shows the disk label for a Victor 9000 Hard Disk image file.
     Ensure the file you're inserting is derived from the one you extracted."""
 
@@ -205,6 +206,15 @@ def cli(hdfile, verbose, extract, insert):
             print('Volume size mismatch.')
         infile.close()
         outfile.close()
+    elif dumpall:
+        print('Dumping all MS-DOS volumes...')
+        for volume in disklabel.virtual_volume_list:
+            if volume.label_type == 1:
+                savevolume = open(hdfile.name+'.'+'{:0>3}'.format(volume.volume_number),'wb')
+                extract_volume(hdfile, savevolume, volume)
+                print('Extracting %s' % savevolume.name)
+                savevolume.close()
+        
     hdfile.close() 
 
 def extract_volume(hdfile, savevolume, volume):
