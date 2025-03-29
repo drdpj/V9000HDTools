@@ -154,6 +154,12 @@ Extracted vol1.img
 
 You can then add/retrieve files from the extracted image using whatever tools you have available.
 
+It is possible to dump all the MS-DOS volumes in one go using:
+```
+showstat.py -d 60meg.dsk
+```
+This will generate a file for each volume with a three digit suffix representing the volume number (e.g. 60meg.dsk.000).
+
 To re-integrate the volume:
 ```
 showstat.py -i vol1.img 1 new60meg.dsk 60meg.dsk
@@ -164,3 +170,4 @@ Attempting to insert vol1.img as volume 1 in new file new60meg.dsk.
 ```
 
 Your original image will remain as it was, a new file is created (new60meg.dsk) with your edited volume inserted back in the right place.
+
