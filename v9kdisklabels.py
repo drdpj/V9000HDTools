@@ -382,6 +382,17 @@ class HDLabel:
                            self.disk_address, self.load_address, self.load_length, self.code_entry, self.primary_boot_volume)
         data = data + CONTROL_PARAMS_FORMAT.pack(self.cylinders, self.heads, self.reduced_current, self.write_precomp, 
                                   self.data_burst, self.fast_step_control, self.interleave, self.spare_bytes)
+        
+        data = data + SINGLE_BYTE_FORMAT.pack(self.available_media_region_count)
+        
+        for mediaitem in self.available_media_list:
+            data = data + MEDIA_LIST_FORMAT.pack(mediaitem.address, mediaitem.blocks)
+            
+        data = data + SINGLE_BYTE_FORMAT.pack(self.working_media_region_count)
+        
+        for mediaitem in self.working_media_list:
+            data = data + MEDIA_LIST_FORMAT.pack(mediaitem.address, mediaitem.blocks)
+        
         return data
     
     def set_hdd_labels(self, first_two_sector_data):

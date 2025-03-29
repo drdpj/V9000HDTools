@@ -66,6 +66,24 @@ Virtual Volumes: 3
 
 You can see the basic information for the drive. And the volumes on it - this particular image has three volumes, 0 and 1 are usable MSDOS volumes, at this stage I'm not sure what the maintenance volume is there for!
 
+If you've got an image from an original drive it's quite feasible that some bad blocks will have been mapped out. You'll see that there are more "Available Media" and "Working Media" blocks defined.  In this situation the software will create a sanitised copy of your original image with a .new suffix, stripping out the bad blocks and giving you one contiguous file that will work with drive emulators.
+
+```
+Available Media: 3
+        Address = 0x0   Blocks = 0x4444  (17476)
+        Address = 0x4455        Blocks = 0x33  (51)
+        Address = 0x4499        Blocks = 0xc9e  (3230)
+
+Working Media: 3
+        Address = 0x0   Blocks = 0x4444  (17476)
+        Address = 0x4455        Blocks = 0x33  (51)
+        Address = 0x4499        Blocks = 0xc9e  (3230)
+
+This looks to be an image of a disc that had bad regions.
+Generating a new file: mydisk.hdf.new that has these stripped.
+The following information will be based on the new file.
+```
+
 Addresses of volumes are the number of sectors from the start of the disk where they start. We can see further information about the volumes using the -v or --verbose option:
 
 ```

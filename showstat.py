@@ -20,6 +20,7 @@
 import click
 import v9kdisklabels
 import os
+import copy
 
 
 @click.command()
@@ -69,6 +70,65 @@ def cli(hdfile, verbose, extract, insert):
     print('\nWorking Media: %i' % disklabel.working_media_region_count)
     for media in disklabel.working_media_list:
         print('\tAddress = %s' % hex(media.address),'\tBlocks = %s' % hex(media.blocks), ' (%i)'% media.blocks)
+    
+    # If this is a real disk image, we might have bad tracks - in which case let's eject a sanitised
+    # version of the disk image.
+    if disklabel.available_media_region_count > 1:
+        
+        # Make a new disklabel which only has the one zone
+        newlabel=copy.deepcopy(disklabel)
+
+        #set up a new availablemedia object
+        avmedia = v9kdisklabels.AvailableMedia()
+        avmedia.address=0
+        avmedia.blocks=newlabel.cylinders*newlabel.heads*17
+        avmedia.region_number=0
+        
+        # Stick it in the available Media list
+        newlabel.available_media_region_count=1
+        newlabel.available_media_list=[]
+        newlabel.available_media_list.append(avmedia)
+        
+        #Stick it in the working Media list (as a copy)
+        newlabel.working_media_region_count=1
+        newlabel.working_media_list=[]
+        newlabel.working_media_list.append(copy.deepcopy(avmedia))
+        
+        sanitised_file = open(hdfile.name+'.new','wb')
+
+        print('\nThis looks to be an image of a disc that had bad regions.\n'+
+              'Generating a new file: %s that has these stripped.' % sanitised_file.name)
+        print('The following information will be based on the new file.')
+        
+        outdata = bytearray(newlabel.get_binary_label())
+        padding = bytearray(newlabel.sector_size-len(outdata))
+        outdata.extend(padding)
+        #Write new label out
+        sanitised_file.write(outdata)
+        
+        #foreach working media copy x blocks from x address (if first, address+2)
+
+        for media in disklabel.available_media_list:
+            address = media.address
+            blocks = media.blocks
+            if media.region_number==0:
+                address += 1
+                blocks -= 1
+            hdfile.seek(address*disklabel.sector_size,0)
+            outdata=hdfile.read(blocks*disklabel.sector_size)
+            sanitised_file.write(outdata)
+                
+        padding = bytearray(os.stat(hdfile.name).st_size-os.stat(sanitised_file.name).st_size)
+        sanitised_file.write(padding)
+        #close files
+        hdfile.close()
+        sanitised_file.close()
+        #point hdfile at the new file
+        hdfile=open(sanitised_file.name,'rb')
+        disklabel=newlabel      
+        
+        
+
     
     print('\nVirtual Volumes: %i' % disklabel.virtual_volume_count)
     for volume in disklabel.virtual_volume_list:
